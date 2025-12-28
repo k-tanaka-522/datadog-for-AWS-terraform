@@ -1,0 +1,52 @@
+# terraform.tfvars.example
+# このファイルをコピーして terraform.tfvars を作成してください
+# cp terraform.tfvars.example terraform.tfvars
+
+# ⚠️ Datadog API Key/APP Key は環境変数で注入してください:
+#   $env:TF_VAR_datadog_api_key = $env:DD_API_KEY
+#   $env:TF_VAR_datadog_app_key = $env:DD_APP_KEY
+# terraform.tfvarsには一切記載しないでください
+
+# AWS リソース識別子（例）
+rds_instance_id     = "myapp-db"
+ecs_cluster_name    = "myapp-cluster"
+alb_target_group    = "myapp-tg"
+alb_fqdn            = "myapp-1234567890.ap-northeast-1.elb.amazonaws.com"
+ecr_repository_name = "myapp"
+app_domain          = "myapp.example.com"
+
+# 閾値
+rds_cpu_threshold = 95
+rds_mem_threshold = 1073741824 # 1GB
+
+# E2Eヘルスチェック有効化フラグ
+e2e_health_check_enabled = true
+
+# テナント定義
+tenants = {
+  tenant-a = {
+    errors_threshold  = 10
+    latency_threshold = 1000
+  }
+  tenant-b = {
+    errors_threshold  = 10
+    latency_threshold = 1000
+  }
+  tenant-c = {
+    errors_threshold  = 10
+    latency_threshold = 1000
+  }
+}
+
+# 通知先
+notification_channels_l0        = ["@slack-ops-alerts-critical"]
+notification_channels_l2        = ["@slack-ops-alerts-high"]
+notification_channels_l3        = ["@slack-tenant-alerts"]
+notification_channels_composite = ["@slack-ops-alerts"]
+
+# 共通タグ
+common_tags = {
+  project     = "datadog-poc"
+  environment = "poc"
+  managed_by  = "terraform"
+}

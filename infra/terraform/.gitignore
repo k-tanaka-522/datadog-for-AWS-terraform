@@ -1,0 +1,13 @@
+# Terraform State（機密情報含む）
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# 変数ファイル（機密情報含む）
+terraform.tfvars
+*.auto.tfvars
+
+# ログファイル
+terraform-debug.log
+crash.log

@@ -64,6 +64,12 @@ coverage/
 # テスト
 .pytest_cache/
 
+# Secrets（追加）
+*.pem
+*.key
+secrets.json
+credentials.json
+
 # レビュー用の一時ディレクトリ
 review-temp/
 
