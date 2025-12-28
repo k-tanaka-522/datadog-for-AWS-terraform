@@ -5,7 +5,7 @@
 | 項目 | 内容 |
 |------|------|
 | ドキュメント名 | API設計 |
-| バージョン | 1.1 |
+| バージョン | 1.2 |
 | 作成日 | 2025-12-28 |
 | 作成者 | App-Architect |
 
@@ -16,6 +16,7 @@
 ### 基本方針
 - **RESTful API**: リソース指向の設計
 - **マルチテナント対応**: パスパラメータで tenant_id を受け取る
+- **E2E監視対応**: L2（サービスレベル）とL3（テナントレベル）のヘルスチェック
 - **監視データ生成**: Datadog APM トレース送信
 - **エラーハンドリング**: 統一されたエラーレスポンス形式
 
@@ -30,13 +31,16 @@
 
 | # | メソッド | パス | 概要 | 認証 | 監視関連 |
 |---|---------|------|------|------|----------|
-| 1 | GET | /{tenant_id}/health | ヘルスチェック | 不要 | FR-003-1 (L3) |
-| 2 | POST | /{tenant_id}/simulate/error | エラー発生テスト | 不要 | FR-003-2 (L3) |
-| 3 | POST | /{tenant_id}/simulate/latency | 遅延発生テスト | 不要 | FR-003-3 (L3) |
-| 4 | GET | /{tenant_id}/items | サンプルデータ一覧 | 不要 | FR-001 (L0 RDS) |
-| 5 | POST | /{tenant_id}/items | サンプルデータ作成 | 不要 | FR-001 (L0 RDS) |
-| 6 | GET | /{tenant_id}/items/{id} | サンプルデータ詳細 | 不要 | FR-001 (L0 RDS) |
-| 7 | POST | /admin/shutdown | ECSタスク停止テスト | 不要 | FR-002-2 (L2) |
+| 1 | GET | /health | サービスレベルヘルスチェック | 不要 | FR-003-0 (L2 E2E) |
+| 2 | GET | /{tenant_id}/health | テナント別ヘルスチェック | 不要 | FR-003-1 (L3 E2E) |
+| 3 | POST | /{tenant_id}/simulate/error | エラー発生テスト | 不要 | FR-003-2 (L3) |
+| 4 | POST | /{tenant_id}/simulate/latency | 遅延発生テスト | 不要 | FR-003-3 (L3) |
+| 5 | GET | /{tenant_id}/items | サンプルデータ一覧 | 不要 | FR-001 (L0 RDS) |
+| 6 | POST | /{tenant_id}/items | サンプルデータ作成 | 不要 | FR-001 (L0 RDS) |
+| 7 | GET | /{tenant_id}/items/{id} | サンプルデータ詳細 | 不要 | FR-001 (L0 RDS) |
+| 8 | POST | /admin/shutdown | ECSタスク停止テスト | 不要 | FR-002-2 (L2) |
+
+**エンドポイント総数**: 8
 
 ---
 
@@ -44,9 +48,51 @@
 
 ---
 
-### 1. GET /{tenant_id}/health
+### 1. GET /health
 
-**概要**: テナント別ヘルスチェック
+**概要**: サービスレベルヘルスチェック（L2 E2E監視用）
+
+**パスパラメータ**: なし
+
+**リクエスト例**:
+```bash
+GET /health
+```
+
+**レスポンス（成功: 200 OK）**:
+```json
+{
+  "status": "ok",
+  "database": "connected",
+  "timestamp": "2025-12-28T12:34:56.789Z"
+}
+```
+
+**レスポンス（エラー: 503 Service Unavailable - DB接続失敗）**:
+```json
+{
+  "status": "error",
+  "database": "disconnected",
+  "timestamp": "2025-12-28T12:34:56.789Z"
+}
+```
+
+**RDS疎通確認**:
+- クエリ: `SELECT 1` （単純な疎通確認）
+- 目的: ALB → ECS → RDS の全体の疎通を確認
+
+**監視**: FR-003-0（L2 E2E監視）
+- **Datadog Synthetic Monitoring**: `/health` を定期的に呼び出し、200以外を返した場合にアラート
+- **監視間隔**: 5分（Synthetic Test）
+- **アラート条件**: 200以外のステータスコード、またはレスポンスタイムが閾値を超えた場合
+
+**重要**: このエンドポイントはテナントIDを必要としません。サービス全体の疎通確認に使用します。
+
+---
+
+### 2. GET /{tenant_id}/health
+
+**概要**: テナント別ヘルスチェック（L3 E2E監視用）
 
 **パスパラメータ**:
 | パラメータ | 型 | 必須 | 説明 |
@@ -61,10 +107,10 @@ GET /tenant-a/health
 **レスポンス（成功: 200 OK）**:
 ```json
 {
-  "status": "healthy",
+  "status": "ok",
   "tenant_id": "tenant-a",
   "database": "connected",
-  "timestamp": "2025-12-28T10:00:00Z"
+  "timestamp": "2025-12-28T12:34:56.789Z"
 }
 ```
 
@@ -82,19 +128,28 @@ GET /tenant-a/health
 **レスポンス（エラー: 503 Service Unavailable - DB接続失敗）**:
 ```json
 {
-  "status": "unhealthy",
+  "status": "error",
   "tenant_id": "tenant-a",
   "database": "disconnected",
-  "timestamp": "2025-12-28T10:00:00Z"
+  "timestamp": "2025-12-28T12:34:56.789Z"
 }
 ```
 
-**監視**: FR-003-1（L3 ヘルスチェック監視）
-- Datadog Monitor: `/{tenant_id}/health` が200以外を返した場合にアラート
+**RDS疎通確認**:
+- クエリ: `SELECT 1 FROM items WHERE tenant_id = '{tenant_id}' LIMIT 1` （テナント別疎通確認）
+- 目的: ALB → ECS → RDS（テナント固有データ）の疎通を確認
+
+**監視**: FR-003-1（L3 E2E監視）
+- **Datadog Synthetic Monitoring**: `/{tenant_id}/health` を定期的に呼び出し、200以外を返した場合にアラート
+- **監視対象**: tenant-a, tenant-b, tenant-c（各テナント別に監視）
+- **監視間隔**: 5分（Synthetic Test）
+- **アラート条件**: 200以外のステータスコード、またはレスポンスタイムが閾値を超えた場合
+
+**重要**: テナント固有のデータ疎通を確認するため、itemsテーブルへのクエリを実行します。
 
 ---
 
-### 2. POST /{tenant_id}/simulate/error
+### 3. POST /{tenant_id}/simulate/error
 
 **概要**: エラー発生テスト（L3 エラーログ監視用）
 
@@ -152,7 +207,7 @@ Content-Type: application/json
 
 ---
 
-### 3. POST /{tenant_id}/simulate/latency
+### 4. POST /{tenant_id}/simulate/latency
 
 **概要**: 遅延発生テスト（L3 レイテンシ監視用）
 
@@ -209,7 +264,7 @@ Content-Type: application/json
 
 ---
 
-### 4. GET /{tenant_id}/items
+### 5. GET /{tenant_id}/items
 
 **概要**: サンプルデータ一覧取得（RDS監視用）
 
@@ -272,7 +327,7 @@ GET /tenant-a/items
 
 ---
 
-### 5. POST /{tenant_id}/items
+### 6. POST /{tenant_id}/items
 
 **概要**: サンプルデータ作成（RDS監視用）
 
@@ -342,7 +397,7 @@ Content-Type: application/json
 
 ---
 
-### 6. GET /{tenant_id}/items/{id}
+### 7. GET /{tenant_id}/items/{id}
 
 **概要**: サンプルデータ詳細取得（RDS監視用）
 
@@ -395,7 +450,7 @@ GET /tenant-a/items/1
 
 ---
 
-### 7. POST /admin/shutdown
+### 8. POST /admin/shutdown
 
 **概要**: ECSタスク停止テスト（L2 ECS Task 監視用）
 
@@ -492,7 +547,7 @@ POST /admin/shutdown
 | env | poc |
 | version | 1.0.0 |
 | resource | エンドポイントパス（例: GET /{tenant_id}/items） |
-| tenant_id | テナントID（カスタムタグ） |
+| tenant_id | テナントID（カスタムタグ、テナント別エンドポイントのみ） |
 | http.method | HTTPメソッド |
 | http.status_code | HTTPステータスコード |
 | http.url | リクエストURL |
@@ -541,3 +596,4 @@ POST /admin/shutdown
 |------|-----------|----------|--------|
 | 2025-12-28 | 1.0 | 初版作成 | App-Architect |
 | 2025-12-28 | 1.1 | エラーハンドリングのビジネス影響を追記 | App-Architect |
+| 2025-12-28 | 1.2 | E2E監視対応: `/health` エンドポイント追加、`/{tenant_id}/health` にRDS疎通確認を追記 | App-Architect |

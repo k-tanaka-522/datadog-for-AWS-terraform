@@ -5,7 +5,7 @@
 | 項目 | 内容 |
 |------|------|
 | ドキュメント名 | 詳細設計 INDEX |
-| バージョン | 1.0 |
+| バージョン | 2.0 |
 | 作成日 | 2025-12-28 |
 | 作成者 | App-Architect |
 
@@ -49,23 +49,23 @@
 docs/03_アプリケーション設計/02_詳細設計/
 ├── INDEX.md                          # 目次（このファイル）
 ├── controllers/
-│   ├── health.md                     # ヘルスチェック詳細設計
-│   ├── simulate.md                   # 障害シミュレーション詳細設計
-│   ├── items.md                      # サンプルデータCRUD詳細設計
-│   └── admin.md                      # 管理機能詳細設計
+│   ├── health.md                     # ✅ ヘルスチェック詳細設計
+│   ├── simulate.md                   # ✅ 障害シミュレーション詳細設計
+│   ├── items.md                      # ✅ サンプルデータCRUD詳細設計
+│   └── admin.md                      # ✅ 管理機能詳細設計
 ├── services/
-│   ├── tenant_service.md             # テナント検証詳細設計
-│   ├── items_service.md              # サンプルデータビジネスロジック詳細設計
-│   └── monitoring_service.md         # 監視データ生成詳細設計
+│   ├── tenant_service.md             # ✅ テナント検証詳細設計
+│   ├── items_service.md              # ✅ サンプルデータビジネスロジック詳細設計
+│   └── monitoring_service.md         # ✅ 監視データ生成詳細設計
 ├── repositories/
-│   ├── items_repository.md           # itemsテーブルCRUD詳細設計
-│   └── database.md                   # データベースセッション管理詳細設計
+│   ├── items_repository.md           # ✅ itemsテーブルCRUD詳細設計
+│   └── database.md                   # ✅ データベースセッション管理詳細設計
 ├── models/
-│   └── item.md                       # SQLAlchemy Model詳細設計
+│   └── item.md                       # ✅ SQLAlchemy Model詳細設計
 └── middlewares/
-    ├── datadog_middleware.md         # Datadog APM統合詳細設計
-    ├── error_handler.md              # エラーハンドリング詳細設計
-    └── logger.md                     # 構造化ログ詳細設計
+    ├── datadog_middleware.md         # ✅ Datadog APM統合詳細設計
+    ├── error_handler.md              # ✅ エラーハンドリング詳細設計
+    └── logger.md                     # ✅ 構造化ログ詳細設計
 ```
 
 ---
@@ -74,15 +74,15 @@ docs/03_アプリケーション設計/02_詳細設計/
 
 ### 1. Controllers（プレゼンテーション層）
 
-| ファイル | モジュール | 概要 | 主要機能 |
-|---------|----------|------|---------|
-| `controllers/health.md` | `health_controller.py` | ヘルスチェック処理 | - テナント検証<br>- DB接続確認<br>- ヘルス状態返却 |
-| `controllers/simulate.md` | `simulate_controller.py` | 障害シミュレーション処理 | - エラー発生テスト<br>- レイテンシ発生テスト<br>- 監視データ生成 |
-| `controllers/items.md` | `items_controller.py` | サンプルデータCRUD処理 | - データ一覧取得<br>- データ作成<br>- データ詳細取得 |
-| `controllers/admin.md` | `admin_controller.py` | 管理機能処理 | - ECSタスク停止 |
+| ファイル | モジュール | 概要 | 主要機能 | ステータス |
+|---------|----------|------|---------|----------|
+| `controllers/health.md` | `health_controller.py` | ヘルスチェック処理 | - テナント検証<br>- DB接続確認<br>- ヘルス状態返却 | ✅ 完成 |
+| `controllers/simulate.md` | `simulate_controller.py` | 障害シミュレーション処理 | - エラー発生テスト<br>- レイテンシ発生テスト<br>- 監視データ生成 | ✅ 完成 |
+| `controllers/items.md` | `items_controller.py` | サンプルデータCRUD処理 | - データ一覧取得<br>- データ作成<br>- データ詳細取得 | ✅ 完成 |
+| `controllers/admin.md` | `admin_controller.py` | 管理機能処理 | - ECSタスク停止 | ✅ 完成 |
 
 **依存関係**:
-- `health_controller.py` → `tenant_service.py`, `items_repository.py`
+- `health_controller.py` → `tenant_service.py`, `database.py`
 - `simulate_controller.py` → `tenant_service.py`, `monitoring_service.py`
 - `items_controller.py` → `tenant_service.py`, `items_service.py`
 - `admin_controller.py` → なし
@@ -91,11 +91,11 @@ docs/03_アプリケーション設計/02_詳細設計/
 
 ### 2. Services（ビジネスロジック層）
 
-| ファイル | モジュール | 概要 | 主要機能 |
-|---------|----------|------|---------|
-| `services/tenant_service.md` | `tenant_service.py` | テナント検証 | - テナントID検証<br>- テナント設定取得<br>- 無効テナントエラー |
-| `services/items_service.md` | `items_service.py` | サンプルデータビジネスロジック | - データ一覧取得<br>- データ作成<br>- データ取得 |
-| `services/monitoring_service.md` | `monitoring_service.py` | 監視データ生成 | - エラー発生<br>- レイテンシ発生<br>- ログ出力 |
+| ファイル | モジュール | 概要 | 主要機能 | ステータス |
+|---------|----------|------|---------|----------|
+| `services/tenant_service.md` | `tenant_service.py` | テナント検証 | - テナントID検証<br>- テナント設定取得<br>- 無効テナントエラー | ✅ 完成 |
+| `services/items_service.md` | `items_service.py` | サンプルデータビジネスロジック | - データ一覧取得<br>- データ作成<br>- データ取得 | ✅ 完成 |
+| `services/monitoring_service.md` | `monitoring_service.py` | 監視データ生成 | - エラー発生<br>- レイテンシ発生<br>- ログ出力 | ✅ 完成 |
 
 **依存関係**:
 - `tenant_service.py` → `settings.py`
@@ -106,10 +106,10 @@ docs/03_アプリケーション設計/02_詳細設計/
 
 ### 3. Repositories（データアクセス層）
 
-| ファイル | モジュール | 概要 | 主要機能 |
-|---------|----------|------|---------|
-| `repositories/items_repository.md` | `items_repository.py` | itemsテーブルCRUD操作 | - テナント別データ取得<br>- ID別データ取得<br>- データ保存<br>- データ削除 |
-| `repositories/database.md` | `database.py` | データベースセッション管理 | - セッション取得<br>- DB初期化<br>- 接続プール管理 |
+| ファイル | モジュール | 概要 | 主要機能 | ステータス |
+|---------|----------|------|---------|----------|
+| `repositories/items_repository.md` | `items_repository.py` | itemsテーブルCRUD操作 | - テナント別データ取得<br>- ID別データ取得<br>- データ保存<br>- データ削除 | ✅ 完成 |
+| `repositories/database.md` | `database.py` | データベースセッション管理 | - セッション取得<br>- DB初期化<br>- 接続プール管理 | ✅ 完成 |
 
 **依存関係**:
 - `items_repository.py` → `database.py`, `item.py`
@@ -119,9 +119,9 @@ docs/03_アプリケーション設計/02_詳細設計/
 
 ### 4. Models（SQLAlchemy Model）
 
-| ファイル | モジュール | 概要 | 主要機能 |
-|---------|----------|------|---------|
-| `models/item.md` | `item.py` | itemsテーブルエンティティ定義 | - カラム定義<br>- インデックス定義<br>- リレーションシップ |
+| ファイル | モジュール | 概要 | 主要機能 | ステータス |
+|---------|----------|------|---------|----------|
+| `models/item.md` | `item.py` | itemsテーブルエンティティ定義 | - カラム定義<br>- インデックス定義<br>- リレーションシップ | ✅ 完成 |
 
 **依存関係**:
 - `item.py` → SQLAlchemy（ORM）
@@ -130,11 +130,11 @@ docs/03_アプリケーション設計/02_詳細設計/
 
 ### 5. Middlewares（横断的関心事）
 
-| ファイル | モジュール | 概要 | 主要機能 |
-|---------|----------|------|---------|
-| `middlewares/datadog_middleware.md` | `datadog_middleware.py` | Datadog APM統合 | - ddtrace初期化<br>- トレース送信<br>- カスタムタグ設定 |
-| `middlewares/error_handler.md` | `error_handler.py` | エラーハンドリング | - 例外キャッチ<br>- エラーログ出力<br>- エラーレスポンス返却 |
-| `middlewares/logger.md` | `logger.py` | 構造化ログ出力 | - JSON形式ログ<br>- トレースID付与<br>- ログレベル管理 |
+| ファイル | モジュール | 概要 | 主要機能 | ステータス |
+|---------|----------|------|---------|----------|
+| `middlewares/datadog_middleware.md` | `datadog_middleware.py` | Datadog APM統合 | - ddtrace初期化<br>- トレース送信<br>- カスタムタグ設定 | ✅ 完成 |
+| `middlewares/error_handler.md` | `error_handler.py` | エラーハンドリング | - 例外キャッチ<br>- エラーログ出力<br>- エラーレスポンス返却 | ✅ 完成 |
+| `middlewares/logger.md` | `logger.py` | 構造化ログ出力 | - JSON形式ログ<br>- トレースID付与<br>- ログレベル管理 | ✅ 完成 |
 
 **依存関係**:
 - `datadog_middleware.py` → `ddtrace`
@@ -176,7 +176,7 @@ graph TB
     end
 
     Health --> TenantService
-    Health --> ItemsRepo
+    Health --> Database
     Simulate --> TenantService
     Simulate --> MonitoringService
     Items --> TenantService
@@ -270,39 +270,39 @@ graph TB
 ### ステップ2: レイヤー別実装
 
 #### Phase 1: Models（データモデル）
-1. `models/item.md` を読む
+1. ✅ `models/item.md` を読む
 2. `item.py` を実装
 
 #### Phase 2: Repositories（データアクセス層）
-1. `repositories/database.md` を読む
+1. ✅ `repositories/database.md` を読む
 2. `database.py` を実装
-3. `repositories/items_repository.md` を読む
+3. ✅ `repositories/items_repository.md` を読む
 4. `items_repository.py` を実装
 
 #### Phase 3: Services（ビジネスロジック層）
-1. `services/tenant_service.md` を読む
+1. ✅ `services/tenant_service.md` を読む
 2. `tenant_service.py` を実装
-3. `services/items_service.md` を読む
+3. ✅ `services/items_service.md` を読む
 4. `items_service.py` を実装
-5. `services/monitoring_service.md` を読む
+5. ✅ `services/monitoring_service.md` を読む
 6. `monitoring_service.py` を実装
 
 #### Phase 4: Controllers（プレゼンテーション層）
-1. `controllers/health.md` を読む
+1. ✅ `controllers/health.md` を読む
 2. `health_controller.py` を実装
-3. `controllers/items.md` を読む
+3. ✅ `controllers/items.md` を読む
 4. `items_controller.py` を実装
-5. `controllers/simulate.md` を読む
+5. ✅ `controllers/simulate.md` を読む
 6. `simulate_controller.py` を実装
-7. `controllers/admin.md` を読む
+7. ✅ `controllers/admin.md` を読む
 8. `admin_controller.py` を実装
 
 #### Phase 5: Middlewares（横断的関心事）
-1. `middlewares/logger.md` を読む
+1. ✅ `middlewares/logger.md` を読む
 2. `logger.py` を実装
-3. `middlewares/error_handler.md` を読む
+3. ✅ `middlewares/error_handler.md` を読む
 4. `error_handler.py` を実装
-5. `middlewares/datadog_middleware.md` を読む
+5. ✅ `middlewares/datadog_middleware.md` を読む
 6. `datadog_middleware.py` を実装
 
 ---
@@ -344,19 +344,21 @@ graph TB
 
 | カテゴリ | ファイル | ステータス | 備考 |
 |---------|---------|----------|------|
-| Controllers | `controllers/health.md` | ⏳ 未作成 | 次のタスク |
-| Controllers | `controllers/simulate.md` | ⏳ 未作成 | |
-| Controllers | `controllers/items.md` | ⏳ 未作成 | |
-| Controllers | `controllers/admin.md` | ⏳ 未作成 | |
-| Services | `services/tenant_service.md` | ⏳ 未作成 | |
-| Services | `services/items_service.md` | ⏳ 未作成 | |
-| Services | `services/monitoring_service.md` | ⏳ 未作成 | |
-| Repositories | `repositories/items_repository.md` | ⏳ 未作成 | |
-| Repositories | `repositories/database.md` | ⏳ 未作成 | |
-| Models | `models/item.md` | ⏳ 未作成 | |
-| Middlewares | `middlewares/datadog_middleware.md` | ⏳ 未作成 | |
-| Middlewares | `middlewares/error_handler.md` | ⏳ 未作成 | |
-| Middlewares | `middlewares/logger.md` | ⏳ 未作成 | |
+| Controllers | `controllers/health.md` | ✅ 完成 | 2025-12-28 作成 |
+| Controllers | `controllers/simulate.md` | ✅ 完成 | 2025-12-28 作成 |
+| Controllers | `controllers/items.md` | ✅ 完成 | 2025-12-28 作成 |
+| Controllers | `controllers/admin.md` | ✅ 完成 | 2025-12-28 作成 |
+| Services | `services/tenant_service.md` | ✅ 完成 | 2025-12-28 作成 |
+| Services | `services/items_service.md` | ✅ 完成 | 2025-12-28 作成 |
+| Services | `services/monitoring_service.md` | ✅ 完成 | 2025-12-28 作成 |
+| Repositories | `repositories/items_repository.md` | ✅ 完成 | 2025-12-28 作成 |
+| Repositories | `repositories/database.md` | ✅ 完成 | 2025-12-28 作成 |
+| Models | `models/item.md` | ✅ 完成 | 2025-12-28 作成 |
+| Middlewares | `middlewares/datadog_middleware.md` | ✅ 完成 | 2025-12-28 作成 |
+| Middlewares | `middlewares/error_handler.md` | ✅ 完成 | 2025-12-28 作成 |
+| Middlewares | `middlewares/logger.md` | ✅ 完成 | 2025-12-28 作成 |
+
+**全13ファイル作成完了** ✅
 
 ---
 
@@ -367,27 +369,27 @@ graph TB
 **YOU MUST: 下位レイヤーから上位レイヤーへ**
 
 1. **Models**（依存なし）
-   - `models/item.md`
+   - ✅ `models/item.md`
 
 2. **Repositories**（Models に依存）
-   - `repositories/database.md`
-   - `repositories/items_repository.md`
+   - ✅ `repositories/database.md`
+   - ✅ `repositories/items_repository.md`
 
 3. **Services**（Repositories に依存）
-   - `services/tenant_service.md`
-   - `services/items_service.md`
-   - `services/monitoring_service.md`
+   - ✅ `services/tenant_service.md`
+   - ✅ `services/items_service.md`
+   - ✅ `services/monitoring_service.md`
 
 4. **Controllers**（Services に依存）
-   - `controllers/health.md`
-   - `controllers/items.md`
-   - `controllers/simulate.md`
-   - `controllers/admin.md`
+   - ✅ `controllers/health.md`
+   - ✅ `controllers/items.md`
+   - ✅ `controllers/simulate.md`
+   - ✅ `controllers/admin.md`
 
 5. **Middlewares**（全層から利用）
-   - `middlewares/logger.md`
-   - `middlewares/error_handler.md`
-   - `middlewares/datadog_middleware.md`
+   - ✅ `middlewares/logger.md`
+   - ✅ `middlewares/error_handler.md`
+   - ✅ `middlewares/datadog_middleware.md`
 
 ---
 
@@ -425,3 +427,4 @@ graph TB
 | 日付 | バージョン | 変更内容 | 作成者 |
 |------|-----------|----------|--------|
 | 2025-12-28 | 1.0 | 初版作成（INDEX のみ） | App-Architect |
+| 2025-12-28 | 2.0 | 全13ファイル詳細設計書作成完了、ステータス更新 | App-Architect |
