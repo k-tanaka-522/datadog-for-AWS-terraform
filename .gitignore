@@ -43,6 +43,8 @@ desktop.ini
 *.tfstate.backup
 .terraform/
 *.tfplan
+*.tfvars
+!*.tfvars.example
 
 # AWS
 .aws/
