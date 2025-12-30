@@ -143,8 +143,9 @@ resource "datadog_monitor" "ecs_tasks" {
   renotify_interval = 0
 }
 
-# L0-VPC-Flow Monitor
+# L0-VPC-Flow Monitor (disabled - requires Log Management enabled)
 resource "datadog_monitor" "vpc_flow" {
+  count   = 0  # Disabled: Log Management not enabled in this Datadog account
   name    = "[L0] VPC Flow Logs 異常"
   type    = "log alert"
   query   = "logs(\"source:vpc-flow-logs status:reject\").rollup(\"count\").last(\"5m\") > 100"

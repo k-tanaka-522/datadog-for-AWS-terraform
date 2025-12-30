@@ -35,8 +35,9 @@ resource "datadog_monitor" "health_check" {
   renotify_interval = 0
 }
 
-# L3-Error Monitor（Log Monitor）
+# L3-Error Monitor（Log Monitor - disabled: requires Log Management enabled）
 resource "datadog_monitor" "error_logs" {
+  count   = 0  # Disabled: Log Management not enabled in this Datadog account
   name    = "[L3] ${var.tenant_id} エラーログ数"
   type    = "log alert"
   query   = "logs(\"status:error tenant:${var.tenant_id}\").rollup(\"count\").last(\"5m\") > ${var.errors_threshold}"

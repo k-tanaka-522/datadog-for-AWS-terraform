@@ -19,6 +19,7 @@ terraform {
 provider "datadog" {
   api_key = var.datadog_api_key
   app_key = var.datadog_app_key
+  api_url = "https://api.ap1.datadoghq.com/"
 }
 
 provider "aws" {

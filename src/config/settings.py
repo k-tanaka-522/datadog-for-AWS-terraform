@@ -26,15 +26,28 @@ class Settings:
         - datadog_middleware.py: DD_SERVICE, DD_ENV, DD_VERSION
 
     前提条件:
-        - DATABASE_URL: PostgreSQL接続文字列（sslmode=require必須）
+        - DATABASE_URL または DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME
         - VALID_TENANTS: カンマ区切りのテナントID
     """
 
     # Database設定（SSL/TLS必須）
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql://demo_user:demo_password@localhost:5432/demo_db?sslmode=require"
-    )
+    # ECS環境では個別のDB_*変数から構築、ローカルではDATABASE_URLを使用
+    @staticmethod
+    def _build_database_url() -> str:
+        # 直接指定があればそれを使用
+        if os.getenv("DATABASE_URL"):
+            return os.getenv("DATABASE_URL")
+
+        # 個別の環境変数から構築
+        db_host = os.getenv("DB_HOST", "localhost")
+        db_port = os.getenv("DB_PORT", "5432")
+        db_user = os.getenv("DB_USER", "demo_user")
+        db_password = os.getenv("DB_PASSWORD", "demo_password")
+        db_name = os.getenv("DB_NAME", "demo_db")
+
+        return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
+
+    DATABASE_URL: str = _build_database_url()
 
     # Datadog設定
     DD_SERVICE: str = os.getenv("DD_SERVICE", "demo-api")

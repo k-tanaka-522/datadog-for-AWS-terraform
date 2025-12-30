@@ -4,7 +4,7 @@ output "monitor_ids" {
   description = "L3 Monitor のIDリスト（テナントごと）"
   value = {
     health_check = datadog_monitor.health_check.id
-    error_logs   = datadog_monitor.error_logs.id
+    # error_logs disabled - Log Management not enabled
     latency      = datadog_monitor.latency.id
   }
 }
@@ -13,7 +13,7 @@ output "monitor_names" {
   description = "L3 Monitor の名前リスト"
   value = {
     health_check = datadog_monitor.health_check.name
-    error_logs   = datadog_monitor.error_logs.name
+    # error_logs disabled - Log Management not enabled
     latency      = datadog_monitor.latency.name
   }
 }

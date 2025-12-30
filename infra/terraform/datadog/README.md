@@ -10,19 +10,27 @@ L0（インフラ）、L2（サービス）、L3（テナント）の3層監視�
 
 ```
 terraform/
-├── main.tf                     # モジュール呼び出し
-├── variables.tf                # 変数定義
-├── outputs.tf                  # 出力定義
-├── providers.tf                # Provider設定（Datadog、AWS）
-├── backend.tf                  # State管理（S3 + DynamoDB）
-├── terraform.tfvars.example    # サンプル（Gitにコミット）
-├── .gitignore
-└── modules/                    # 再利用可能なモジュール
-    ├── level0-infra/           # L0 インフラ監視（7個のMonitor）
-    ├── level2-service/         # L2 サービス監視（4個のMonitor）
-    ├── level3-tenant/          # L3 テナント監視（3個のMonitor、for_each対応）
-    └── composite/              # Composite Monitor（L0/L2/L3）
+├── aws/                        # AWS基盤（将来実装予定）
+│   └── .gitkeep
+└── datadog/                    # Datadog監視設定
+    ├── main.tf                     # モジュール呼び出し
+    ├── variables.tf                # 変数定義
+    ├── outputs.tf                  # 出力定義
+    ├── providers.tf                # Provider設定（Datadog、AWS）
+    ├── backend.tf                  # State管理（S3 + DynamoDB）
+    ├── terraform.tfvars.example    # サンプル（Gitにコミット）
+    ├── .gitignore
+    └── modules/                    # 再利用可能なモジュール
+        ├── level0-infra/           # L0 インフラ監視（7個のMonitor）
+        ├── level2-service/         # L2 サービス監視（4個のMonitor）
+        ├── level3-tenant/          # L3 テナント監視（3個のMonitor、for_each対応）
+        └── composite/              # Composite Monitor（L0/L2/L3）
 ```
+
+**ディレクトリ再構成に伴う注意**:
+- 2025-12-29: ディレクトリ構成を変更しました（設計書との対応を明確化）
+- 既存環境で作業している場合は、`terraform init -reconfigure` を実行してください
+- backend.tf の State ファイルパスが `datadog/terraform.tfstate` に変更されています
 
 ## 事前準備
 
@@ -72,6 +80,9 @@ $env:TF_VAR_datadog_app_key = $env:DD_APP_KEY
 ### 初回デプロイ
 
 ```powershell
+# ディレクトリ移動
+cd infra/terraform/datadog
+
 # 1. Terraform 初期化
 terraform init
 
@@ -80,6 +91,27 @@ terraform plan -out=tfplan
 
 # 3. 確認後、apply
 terraform apply tfplan
+```
+
+### 既存環境でディレクトリ再構成後の再初期化
+
+```powershell
+# ディレクトリ移動
+cd infra/terraform/datadog
+
+# 既存の .terraform を削除
+Remove-Item -Recurse -Force .terraform
+
+# backend 設定を再初期化（-reconfigure で既存 State を引き継ぐ）
+terraform init -reconfigure
+
+# State ファイルの移行が必要な場合（旧パスから新パスへ）
+# AWS CLIで手動コピー:
+# aws s3 cp s3://datadog-terraform-state/datadog-monitors/terraform.tfstate s3://datadog-terraform-state/datadog/terraform.tfstate
+
+# plan で差分なしを確認
+terraform plan
+# Output: No changes. Your infrastructure matches the configuration.
 ```
 
 ### テナント追加デプロイ

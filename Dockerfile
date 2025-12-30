@@ -15,6 +15,7 @@ COPY src/ ./src/
 
 # 環境変数設定（デフォルト値）
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/src
 ENV DD_SERVICE=demo-api
 ENV DD_ENV=poc
 

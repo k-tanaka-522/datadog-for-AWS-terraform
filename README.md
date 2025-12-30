@@ -46,6 +46,10 @@ Terraform を使用した AWS ECS マルチテナント環境の構築と、Data
 
 ## クイックスタート
 
+**所要時間**: 約30分
+**簡易版**: [QUICKSTART.md](QUICKSTART.md)
+**詳細版**: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+
 ### 1. シークレット準備
 
 ```bash
@@ -61,8 +65,13 @@ export AWS_PROFILE="your-profile"
 ### 2. Terraform Backend 準備
 
 ```bash
-# S3バケット作成 (初回のみ)
-./scripts/setup-backend.sh
+# S3バケット + DynamoDB テーブル作成 (初回のみ)
+# backend.tf に記載のバケット名を指定
+./scripts/setup-backend.sh datadog-poc-terraform-state
+
+# 正常に作成されたことを確認
+aws s3 ls s3://datadog-poc-terraform-state
+aws dynamodb describe-table --table-name datadog-poc-terraform-state-lock --region ap-northeast-1
 ```
 
 ### 3. ローカル動作確認
@@ -76,19 +85,35 @@ curl http://localhost:8080/acme/health
 ### 4. AWS デプロイ
 
 ```bash
-cd terraform/aws
+cd infra/terraform/aws
 terraform init
-terraform plan -var-file=../shared/tenants.tfvars
-terraform apply -var-file=../shared/tenants.tfvars
+terraform plan -var-file=../shared/tenants.tfvars -var="dd_api_key=${DD_API_KEY}"
+terraform apply -var-file=../shared/tenants.tfvars -var="dd_api_key=${DD_API_KEY}"
+
+# デプロイ完了後、出力されるALB URLを確認
+terraform output alb_dns_name
 ```
 
 ### 5. Datadog 監視デプロイ
 
 ```bash
-cd terraform/datadog
+cd infra/terraform/datadog
 terraform init
 terraform plan -var-file=../shared/tenants.tfvars
 terraform apply -var-file=../shared/tenants.tfvars
+```
+
+### 6. 動作確認
+
+```bash
+# ALB経由でヘルスチェック
+ALB_URL=$(cd infra/terraform/aws && terraform output -raw alb_dns_name)
+curl http://${ALB_URL}/tenant-a/health
+curl http://${ALB_URL}/tenant-b/health
+curl http://${ALB_URL}/tenant-c/health
+
+# Datadogダッシュボード確認
+# https://app.datadoghq.com/dashboard/lists
 ```
 
 ## ディレクトリ構成
@@ -180,8 +205,36 @@ cd terraform/datadog && terraform apply -var-file=../shared/tenants.tfvars
 
 ※ NAT Gateway なし構成（Fargate を Public Subnet に配置）
 
+## リソース削除（検証終了後）
+
+**重要**: このプロジェクトは検証用のデモ環境です。検証終了後は必ずリソースを削除してください。
+
+### 削除手順
+
+```bash
+# 1. Datadog監視を先に削除
+cd infra/terraform/datadog
+terraform destroy -var-file=../shared/tenants.tfvars
+
+# 2. AWSインフラを削除
+cd ../aws
+terraform destroy -var-file=../shared/tenants.tfvars -var="dd_api_key=${DD_API_KEY}"
+
+# 3. Terraform State用S3バケットを削除（オプション）
+# 注意: バケット内のStateファイルが完全に不要な場合のみ実行
+aws s3 rb s3://datadog-poc-terraform-state --force
+aws dynamodb delete-table --table-name datadog-poc-terraform-state-lock --region ap-northeast-1
+```
+
+### 削除時の注意事項
+
+- Datadog → AWS の順で削除（逆順だとDatadog側がエラーになる可能性）
+- RDSスナップショットは自動削除されません（必要に応じて手動削除）
+- ECRリポジトリ内のイメージは削除されないため、必要に応じて手動削除
+
 ## 注意事項
 
+- **本プロジェクトは検証用デモ環境です。検証終了後は必ずリソースを削除してください。**
 - 本番環境では NAT Gateway + Private Subnet 構成を推奨
 - RDS Multi-AZ は検証用のため無効化
 - Datadog フリープランでは一部機能に制限あり
