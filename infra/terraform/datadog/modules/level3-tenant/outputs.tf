@@ -3,18 +3,20 @@
 output "monitor_ids" {
   description = "L3 Monitor のIDリスト（テナントごと）"
   value = {
-    health_check = datadog_monitor.health_check.id
+    # health_check disabled - http.check requires Agent HTTP Check (not configured)
+    health_check_apm = datadog_monitor.health_check_apm.id
     # error_logs disabled - Log Management not enabled
-    latency      = datadog_monitor.latency.id
+    latency = datadog_monitor.latency.id
   }
 }
 
 output "monitor_names" {
   description = "L3 Monitor の名前リスト"
   value = {
-    health_check = datadog_monitor.health_check.name
+    # health_check disabled - http.check requires Agent HTTP Check (not configured)
+    health_check_apm = datadog_monitor.health_check_apm.name
     # error_logs disabled - Log Management not enabled
-    latency      = datadog_monitor.latency.name
+    latency = datadog_monitor.latency.name
   }
 }
 

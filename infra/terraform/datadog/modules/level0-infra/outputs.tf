@@ -9,7 +9,7 @@ output "monitor_ids" {
     rds_storage = datadog_monitor.rds_storage.id
     ecs_tasks   = datadog_monitor.ecs_tasks.id
     # vpc_flow disabled - Log Management not enabled
-    agent       = datadog_monitor.agent.id
+    agent = datadog_monitor.agent.id
   }
 }
 
@@ -22,6 +22,6 @@ output "monitor_names" {
     rds_storage = datadog_monitor.rds_storage.name
     ecs_tasks   = datadog_monitor.ecs_tasks.name
     # vpc_flow disabled - Log Management not enabled
-    agent       = datadog_monitor.agent.name
+    agent = datadog_monitor.agent.name
   }
 }

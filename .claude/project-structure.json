@@ -1,0 +1,225 @@
+{
+  "detected_at": "2025-12-29T00:00:00Z",
+  "project": {
+    "name": "Datadog for AWS Terraform",
+    "path": "c:\\dev2\\datadog-fro-AWS-terraform",
+    "description": "Datadog + AWS ECS マルチテナント監視デモ環境を Terraform で構築するプロジェクト",
+    "phase": "implementation",
+    "tech_stack": {
+      "backend": "Node.js + TypeScript",
+      "frontend": "React",
+      "infrastructure": "Terraform + AWS",
+      "monitoring": "Datadog",
+      "containerization": "Docker + ECS"
+    }
+  },
+  "pm_policy": {
+    "allow_write": [
+      "docs/02_要件定義/**",
+      ".claude-state/**"
+    ],
+    "allow_read": [
+      "docs/**",
+      "CLAUDE.md",
+      ".claude/**"
+    ],
+    "deny_write": [
+      "terraform/**",
+      "app/**",
+      "tests/**",
+      "infra/**",
+      "src/**",
+      "docs/01_企画/**",
+      "docs/03_アプリケーション設計/**",
+      "docs/04_インフラ設計/**",
+      "docs/05_テスト/**",
+      ".claude/docs/40_standards/**"
+    ],
+    "labels": {
+      "terraform/**": "SRE",
+      "app/**": "Coder",
+      "tests/**": "QA",
+      "src/**": "Coder",
+      "infra/**": "SRE",
+      "docs/01_企画/**": "Consultant",
+      "docs/02_要件定義/**": "PM",
+      "docs/03_アプリケーション設計/**": "App-Architect",
+      "docs/04_インフラ設計/**": "Infra-Architect",
+      "docs/05_テスト/**": "QA"
+    }
+  },
+  "directory_structure": {
+    "root": {
+      "CLAUDE.md": "PM用プロジェクト指示書",
+      "terraform": "Terraform IaCコード（AWS + Datadog リソース定義）",
+      "app": "アプリケーションコード（Node.js + React デモアプリ）",
+      "scripts": "運用スクリプト",
+      "docs": "設計書・ドキュメント",
+      ".claude": "AI開発ファシリテーター設定"
+    },
+    "terraform": {
+      "aws": "AWS インフラリソース（VPC, RDS, ECS, ALB）",
+      "datadog": "Datadog 監視設定（Composite Monitor + アラート）",
+      "shared": "共有設定（tenants.tfvars）"
+    },
+    "app": {
+      "src": "ソースコード",
+      "public": "静的アセット"
+    },
+    "docs": {
+      "01_企画": "企画フェーズドキュメント",
+      "02_要件定義": "要件定義書（PM主導）",
+      "03_アプリケーション設計": "アプリケーション設計書＋画面設計",
+      "04_インフラ設計": "インフラ設計書",
+      "05_テスト": "テスト計画・結果"
+    },
+    ".claude": {
+      "agents": "サブエージェント仕様",
+      "docs": "技術標準・ファシリテーションガイド",
+      "helpers": "ヘルパースクリプト",
+      "hooks": "pre-commit hooks",
+      "commands": "カスタムコマンド"
+    }
+  },
+  "phase_map": {
+    "0": {
+      "name": "企画",
+      "lead": "Consultant",
+      "artifact": "docs/01_企画/企画書.md",
+      "status": "completed"
+    },
+    "1": {
+      "name": "要件定義",
+      "lead": "PM",
+      "artifact": "docs/02_要件定義/要件定義書.md",
+      "status": "completed"
+    },
+    "2a": {
+      "name": "アプリケーション設計",
+      "lead": "App-Architect",
+      "artifact": "docs/03_アプリケーション設計/",
+      "status": "completed"
+    },
+    "2b": {
+      "name": "インフラ設計",
+      "lead": "Infra-Architect",
+      "artifact": "docs/04_インフラ設計/",
+      "status": "completed"
+    },
+    "3": {
+      "name": "実装",
+      "lead": "Coder",
+      "artifact": "src/ + app/",
+      "status": "completed"
+    },
+    "4": {
+      "name": "インフラ構築",
+      "lead": "SRE",
+      "artifact": "terraform/ + infra/",
+      "status": "completed"
+    },
+    "5": {
+      "name": "テスト",
+      "lead": "QA",
+      "artifact": "tests/ + docs/05_テスト/",
+      "status": "in_progress"
+    },
+    "6": {
+      "name": "運用移行",
+      "lead": "SRE",
+      "artifact": "運用手順書",
+      "status": "pending"
+    }
+  },
+  "agent_config": {
+    "pm": {
+      "name": "PM（プロジェクトマネージャー）",
+      "role": "オーケストレーション・ファシリテーション",
+      "responsibility": [
+        "ユーザー対話（ビジネス背景優先）",
+        "サブエージェント委譲",
+        "進捗管理（TodoWrite）",
+        "成果物レビュー"
+      ],
+      "no_code_creation": true
+    },
+    "app-architect": {
+      "name": "App-Architect",
+      "role": "アプリケーション設計",
+      "responsibility": [
+        "アーキテクチャ設計",
+        "API設計",
+        "データモデル定義"
+      ]
+    },
+    "infra-architect": {
+      "name": "Infra-Architect",
+      "role": "インフラ設計",
+      "responsibility": [
+        "AWS構成設計",
+        "ネットワーク設計",
+        "セキュリティ設計"
+      ]
+    },
+    "coder": {
+      "name": "Coder",
+      "role": "実装",
+      "responsibility": [
+        "アプリケーション実装",
+        "単体テスト実装"
+      ]
+    },
+    "sre": {
+      "name": "SRE",
+      "role": "インフラ構築＆運用",
+      "responsibility": [
+        "Terraform IaC実装",
+        "デプロイメント管理"
+      ]
+    },
+    "qa": {
+      "name": "QA",
+      "role": "テスト・品質保証",
+      "responsibility": [
+        "テスト計画策定",
+        "結合テスト実施",
+        "受け入れテスト"
+      ]
+    },
+    "designer": {
+      "name": "Designer",
+      "role": "UI/UX設計",
+      "responsibility": [
+        "画面設計",
+        "プロトタイプ作成"
+      ]
+    },
+    "consultant": {
+      "name": "Consultant",
+      "role": "ビジネス・技術アドバイス",
+      "responsibility": [
+        "ビジネスレビュー",
+        "技術実現可能性評価"
+      ]
+    }
+  },
+  "critical_files": {
+    "pm_instructions": "CLAUDE.md",
+    "claude_instructions": ".claude/CLAUDE.md",
+    "project_state": ".claude-state/project-state.json",
+    "decisions": ".claude-state/decisions.json",
+    "progress": ".claude-state/progress.md",
+    "requirements": "docs/02_要件定義/要件定義書.md",
+    "app_design": "docs/03_アプリケーション設計/",
+    "infra_design": "docs/04_インフラ設計/",
+    "terraform_config": "terraform/",
+    "app_code": "app/",
+    "implementation": "src/"
+  },
+  "notes": {
+    "architecture": "Composite Monitor (L0/L2/L3階層) で親子アラート管理",
+    "deployment": "テナント定義 (tenants.tfvars) で自動スケーリング",
+    "state_management": ".claude-state/ で進捗・決定事項を記録（セッション継続性確保）",
+    "quality_gates": "各フェーズ完了時にクロスレビュー実施必須"
+  }
+}

@@ -24,9 +24,9 @@ variable "rds_cpu_warning" {
 }
 
 variable "rds_conn_threshold" {
-  description = "RDS 接続数の閾値（%）"
+  description = "RDS 接続数の閾値（絶対値）"
   type        = number
-  default     = 90
+  default     = 80
 }
 
 variable "rds_mem_threshold" {
@@ -40,9 +40,25 @@ variable "rds_mem_threshold" {
 }
 
 variable "rds_storage_threshold" {
-  description = "RDS 空きストレージの閾値（%）"
+  description = "DEPRECATED: 使用されません。rds_storage_threshold_bytes を使用してください。"
   type        = number
   default     = 5
+}
+
+variable "rds_storage_threshold_bytes" {
+  description = <<-EOT
+    RDS 空きストレージの閾値（バイト）
+    例: 5GB = 5368709120、10GB = 10737418240
+    ⭐ CloudWatch には total_storage_space がないため絶対値で監視
+  EOT
+  type        = number
+  default     = 5368709120 # 5GB
+}
+
+variable "rds_storage_warning_bytes" {
+  description = "RDS 空きストレージの警告閾値（バイト）"
+  type        = number
+  default     = 10737418240 # 10GB
 }
 
 variable "ecs_tasks_threshold" {

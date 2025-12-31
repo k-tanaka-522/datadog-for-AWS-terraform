@@ -35,7 +35,8 @@ module "level3_tenant" {
   source   = "./modules/level3-tenant"
 
   tenant_id         = each.key
-  health_check_url  = "https://${var.app_domain}/${each.key}/health"
+  service_name      = var.service_name
+  health_check_url  = "http://${var.app_domain}/${each.key}/health"
   errors_threshold  = each.value.errors_threshold
   latency_threshold = each.value.latency_threshold
 

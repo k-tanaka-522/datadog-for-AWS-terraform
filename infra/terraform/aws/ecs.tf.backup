@@ -17,8 +17,8 @@ resource "aws_ecs_task_definition" "demo_api" {
   family                   = "demo-api"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "512"  # Increased for Datadog Agent
-  memory                   = "1024" # Increased for Datadog Agent
+  cpu                      = "256"
+  memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
@@ -26,8 +26,8 @@ resource "aws_ecs_task_definition" "demo_api" {
     {
       name      = "demo-api"
       image     = "${aws_ecr_repository.demo_api.repository_url}:latest"
-      cpu       = 256
-      memory    = 512
+      cpu       = 128
+      memory    = 256
       essential = true
       portMappings = [
         {
@@ -60,18 +60,6 @@ resource "aws_ecs_task_definition" "demo_api" {
         {
           name  = "DD_TRACE_ENABLED"
           value = "true"
-        },
-        {
-          name  = "DD_SERVICE"
-          value = "demo-api"
-        },
-        {
-          name  = "DD_ENV"
-          value = "poc"
-        },
-        {
-          name  = "DD_VERSION"
-          value = "1.0.0"
         }
       ]
       secrets = [
@@ -99,8 +87,8 @@ resource "aws_ecs_task_definition" "demo_api" {
     {
       name      = "datadog-agent"
       image     = "public.ecr.aws/datadog/agent:latest"
-      cpu       = 256
-      memory    = 512
+      cpu       = 128
+      memory    = 256
       essential = false
       environment = [
         {
@@ -109,14 +97,10 @@ resource "aws_ecs_task_definition" "demo_api" {
         },
         {
           name  = "DD_SITE"
-          value = "ap1.datadoghq.com"
+          value = "datadoghq.com"
         },
         {
           name  = "DD_APM_ENABLED"
-          value = "true"
-        },
-        {
-          name  = "DD_APM_NON_LOCAL_TRAFFIC"
           value = "true"
         },
         {

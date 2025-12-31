@@ -30,12 +30,12 @@ resource "datadog_monitor" "l0_composite" {
   renotify_interval = 0
 }
 
-# L2 Composite Monitor (disabled - query validation issue)
+# L2 Composite Monitor
+# L0障害時にL2アラートを抑制（PoCの核心機能）
 resource "datadog_monitor" "l2_composite" {
-  count   = 0  # Disabled: Composite query validation error
   name    = "[L2 Composite] サービスレイヤー障害"
   type    = "composite"
-  query   = "(${join(" || ", [for monitor_id in values(var.l2_monitor_ids) : "${monitor_id}"])}) && NOT ${datadog_monitor.l0_composite.id}"
+  query   = "${join(" || ", [for monitor_id in values(var.l2_monitor_ids) : "${monitor_id}"])} && !${datadog_monitor.l0_composite.id}"
   message = <<-EOT
     [L2 Composite] サービスレイヤーで障害が発生しました。
     - 影響: 該当サービス
@@ -62,13 +62,14 @@ resource "datadog_monitor" "l2_composite" {
   renotify_interval = 0
 }
 
-# L3 Composite Monitor (disabled - depends on L2)
+# L3 Composite Monitor
+# L0/L2障害時にL3アラートを抑制（PoCの核心機能）
 resource "datadog_monitor" "l3_composite" {
-  for_each = {}  # Disabled: depends on L2_composite which is disabled
+  for_each = var.tenants
 
   name    = "[L3 Composite] ${each.key} 障害"
   type    = "composite"
-  query   = "dummy"  # Disabled
+  query   = "${join(" || ", [for monitor_id in values(var.l3_monitor_ids[each.key]) : "${monitor_id}"])} && !${datadog_monitor.l0_composite.id} && !${datadog_monitor.l2_composite.id}"
   message = <<-EOT
     [L3 Composite] ${each.key} で障害が発生しました。
     - 影響: ${each.key} のみ

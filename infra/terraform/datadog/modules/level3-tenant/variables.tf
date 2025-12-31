@@ -6,6 +6,12 @@ variable "tenant_id" {
   type        = string
 }
 
+variable "service_name" {
+  description = "APM サービス名（例: demo-api）"
+  type        = string
+  default     = "demo-api"
+}
+
 variable "health_check_url" {
   description = "ヘルスチェックURL（例: https://myapp.example.com/tenant-a/health）"
   type        = string

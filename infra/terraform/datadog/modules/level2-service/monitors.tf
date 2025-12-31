@@ -2,14 +2,17 @@
 # L2 サービス監視 Monitor（4個）
 
 # L2-ALB-Health Monitor
+# NOTE: 実際のTarget Group名は demo-api-tenant-*-tg 形式。
+#       ワイルドカードで全テナントのTarget Groupを集計監視。
+#       Datadog タグ形式: targetgroup:targetgroup/demo-api-tenant-X-tg/xxxx
 resource "datadog_monitor" "alb_health" {
   name    = "[L2] ALB Target Group Health"
   type    = "metric alert"
-  query   = "avg(last_5m):avg:aws.applicationelb.healthy_host_count{targetgroup:${var.alb_target_group}} <= ${var.alb_healthy_host_threshold}"
+  query   = "avg(last_5m):sum:aws.applicationelb.healthy_host_count{targetgroup:targetgroup/demo-api-tenant*} <= ${var.alb_healthy_host_threshold}"
   message = <<-EOT
     [L2] ALB Target Groupのヘルシーホストが${var.alb_healthy_host_threshold}になりました。
-    - Target Group: ${var.alb_target_group}
-    - Healthy Hosts: {{value}}
+    - Target Group Pattern: demo-api-tenant-*-tg
+    - Healthy Hosts (合計): {{value}}
     - 影響: 全テナント（サービス停止の可能性）
 
     ${join("\n", var.notification_channels)}
@@ -58,8 +61,9 @@ resource "datadog_monitor" "ecs_task_stopped" {
   renotify_interval = 0
 }
 
-# L2-ECR-Vuln Monitor
+# L2-ECR-Vuln Monitor (disabled - requires ECR vulnerability scanning)
 resource "datadog_monitor" "ecr_vulnerability" {
+  count   = 0 # Disabled: ECR vulnerability scanning not enabled or metrics not available
   name    = "[L2] ECR 脆弱性（Critical）"
   type    = "metric alert"
   query   = "avg(last_15m):sum:aws.ecr.vulnerability.critical{repository_name:${var.ecr_repository_name}} > 0"
@@ -98,7 +102,7 @@ resource "datadog_synthetics_test" "e2e_health_check" {
 
   request_definition {
     method = "GET"
-    url    = "https://${var.alb_fqdn}/health"
+    url    = "http://${var.alb_fqdn}/tenant-a/health" # 代表テナントでインフラ疎通確認
   }
 
   assertion {
@@ -131,7 +135,7 @@ resource "datadog_synthetics_test" "e2e_health_check" {
 
   message = <<-EOT
     [L2] ALB→API→RDS E2Eヘルスチェックが失敗しました。
-    - URL: https://${var.alb_fqdn}/health
+    - URL: http://${var.alb_fqdn}/tenant-a/health
     - 影響: 全テナント（サービス停止の可能性）
     - 確認内容: ALB → ECS → RDS 疎通
 

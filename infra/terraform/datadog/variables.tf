@@ -14,6 +14,19 @@ variable "datadog_app_key" {
   sensitive   = true
 }
 
+# AWS アカウントID
+variable "aws_account_id" {
+  description = "AWS Account ID for Datadog Integration"
+  type        = string
+}
+
+# AWS External ID (for Datadog IAM Role)
+variable "aws_external_id" {
+  description = "External ID for Datadog AWS Integration IAM Role"
+  type        = string
+  sensitive   = true
+}
+
 # AWS リソース識別子
 variable "rds_instance_id" {
   description = "RDS インスタンス識別子（例: myapp-db）"
@@ -44,6 +57,12 @@ variable "ecr_repository_name" {
 variable "app_domain" {
   description = "アプリケーションドメイン（例: myapp.example.com）"
   type        = string
+}
+
+variable "service_name" {
+  description = "APM サービス名（例: demo-api）"
+  type        = string
+  default     = "demo-api"
 }
 
 # 閾値

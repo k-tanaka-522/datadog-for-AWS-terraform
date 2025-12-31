@@ -34,7 +34,7 @@ def check_db_connection(db: Session, query: str = "SELECT 1") -> bool:
         bool: True（接続成功）、False（接続失敗）
     """
     try:
-        db.execute(query)
+        db.execute(text(query))
         return True
     except Exception:
         return False
