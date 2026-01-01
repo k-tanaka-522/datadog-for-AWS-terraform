@@ -1,14 +1,19 @@
 # composite モジュール 変数定義
-# Composite Monitor の作成（L0/L2/L3の親子関係によるアラート抑制）
+# Composite Monitor の作成（L0/L1/L2/L3の親子関係によるアラート抑制）
 
 variable "l0_monitor_ids" {
-  description = "L0 Monitor のIDマップ"
+  description = "L0 Monitor のIDマップ（インフラ基盤: Agent監視等）"
+  type        = map(string)
+}
+
+variable "l1_monitor_ids" {
+  description = "L1 Monitor のIDマップ（コンピュートリソース: RDS/ECS監視）"
   type        = map(string)
 }
 
 variable "l2_monitor_ids" {
   description = <<-EOT
-    L2 Monitor のIDマップ
+    L2 Monitor のIDマップ（サービスレイヤー: ALB/ECS/ECR監視）
     例: {
       alb_health = "123",
       ecs_task_stopped = "456",

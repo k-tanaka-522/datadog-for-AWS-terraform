@@ -96,19 +96,25 @@ variable "tenants" {
 
 # 通知先（階層別）
 variable "notification_channels_l0" {
-  description = "L0 Composite の通知先"
+  description = "L0 インフラ基盤監視の通知先"
+  type        = list(string)
+  default     = []
+}
+
+variable "notification_channels_l1" {
+  description = "L1 コンピュートリソース監視の通知先"
   type        = list(string)
   default     = []
 }
 
 variable "notification_channels_l2" {
-  description = "L2 Composite の通知先"
+  description = "L2 サービス監視の通知先"
   type        = list(string)
   default     = []
 }
 
 variable "notification_channels_l3" {
-  description = "L3 Composite の通知先"
+  description = "L3 テナント監視の通知先"
   type        = list(string)
   default     = []
 }
@@ -124,8 +130,8 @@ variable "common_tags" {
   description = "全Monitor に付与する共通タグ"
   type        = map(string)
   default = {
-    project     = "datadog-poc"
-    environment = "poc"
-    managed_by  = "terraform"
+    project    = "datadog-poc"
+    env        = "poc" # Datadog Unified Service Tagging 標準に準拠
+    managed_by = "terraform"
   }
 }

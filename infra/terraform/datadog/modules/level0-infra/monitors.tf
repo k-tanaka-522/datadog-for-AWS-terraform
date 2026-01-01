@@ -1,206 +1,80 @@
-# level0-infra モジュール Monitor定義
-# L0 インフラ監視 Monitor（7個）
+# ============================================================
+# L0 インフラ基盤監視 Monitor
+# ============================================================
+#
+# 【L0層の責務】
+# 監視システムそのものが正常に動作しているかを監視します。
+# この層が障害になると、全ての監視が機能しなくなります。
+#
+# 【設計判断】
+# ECS Fargate では従来のAgent監視（datadog.agent.up）が使えないため、
+# APMトレースの疎通で代替します。
+#
+# 理由:
+# - Fargate では Datadog Agent はサイドカーコンテナとして動作
+# - サービスチェック（datadog.agent.up）は送信されない（Fargate の制限）
+# - 代替として APM トレースの疎通を監視
+#   → Agent稼働 + アプリケーション稼働の両方を確認できる
+#
+# 【参考資料】
+# - Fargate監視: https://docs.datadoghq.com/integrations/ecs_fargate/
+# ============================================================
 
-# L0-RDS-CPU Monitor
-resource "datadog_monitor" "rds_cpu" {
-  name    = "[L0] RDS CPU使用率"
-  type    = "metric alert"
-  query   = "avg(last_5m):avg:aws.rds.cpuutilization{dbinstanceidentifier:${var.rds_instance_id}} > ${var.rds_cpu_threshold}"
-  message = <<-EOT
-    [L0] RDS CPU使用率が${var.rds_cpu_threshold}%を超えました。
-    - DB: ${var.rds_instance_id}
-    - CPU: {{value}}%
-    - 影響: 全テナント
-
-    ${join("\n", var.notification_channels)}
-  EOT
-
-  monitor_thresholds {
-    critical = var.rds_cpu_threshold
-    warning  = var.rds_cpu_warning
-  }
-
-  tags = concat(
-    ["layer:l0", "resource:rds", "severity:critical"],
-    [for k, v in var.tags : "${k}:${v}"]
-  )
-
-  notify_no_data    = false
-  renotify_interval = 0
-}
-
-# L0-RDS-Conn Monitor
-resource "datadog_monitor" "rds_conn" {
-  name    = "[L0] RDS 接続数"
-  type    = "metric alert"
-  query   = "avg(last_5m):avg:aws.rds.database_connections{dbinstanceidentifier:${var.rds_instance_id}} > ${var.rds_conn_threshold}"
-  message = <<-EOT
-    [L0] RDS 接続数が${var.rds_conn_threshold}を超えました。
-    - DB: ${var.rds_instance_id}
-    - 接続数: {{value}}
-    - 影響: 全テナント
-
-    ${join("\n", var.notification_channels)}
-  EOT
-
-  monitor_thresholds {
-    critical = var.rds_conn_threshold
-    warning  = 60
-  }
-
-  tags = concat(
-    ["layer:l0", "resource:rds", "severity:critical"],
-    [for k, v in var.tags : "${k}:${v}"]
-  )
-
-  notify_no_data    = false
-  renotify_interval = 0
-}
-
-# L0-RDS-Mem Monitor
-resource "datadog_monitor" "rds_mem" {
-  name    = "[L0] RDS 空きメモリ"
-  type    = "metric alert"
-  query   = "avg(last_5m):avg:aws.rds.freeable_memory{dbinstanceidentifier:${var.rds_instance_id}} < ${var.rds_mem_threshold}"
-  message = <<-EOT
-    [L0] RDS 空きメモリが${var.rds_mem_threshold}バイト（${floor(var.rds_mem_threshold / 1073741824)}GB）を下回りました。
-    - DB: ${var.rds_instance_id}
-    - 空きメモリ: {{value}}バイト
-    - 影響: 全テナント
-
-    対応: RDSインスタンスタイプの変更を検討してください。
-
-    ${join("\n", var.notification_channels)}
-  EOT
-
-  monitor_thresholds {
-    critical = var.rds_mem_threshold
-    warning  = var.rds_mem_threshold * 2 # 空きメモリが2GB以下で警告
-  }
-
-  tags = concat(
-    ["layer:l0", "resource:rds", "severity:critical"],
-    [for k, v in var.tags : "${k}:${v}"]
-  )
-
-  notify_no_data    = false
-  renotify_interval = 0
-}
-
-# L0-RDS-Storage Monitor
-# NOTE: CloudWatch/Datadog には total_storage_space メトリクスがないため、
-#       絶対値（バイト）での監視に変更。5GB以下でアラート、10GB以下で警告。
-resource "datadog_monitor" "rds_storage" {
-  name    = "[L0] RDS 空きストレージ"
-  type    = "metric alert"
-  query   = "avg(last_5m):avg:aws.rds.free_storage_space{dbinstanceidentifier:${var.rds_instance_id}} < ${var.rds_storage_threshold_bytes}"
-  message = <<-EOT
-    [L0] RDS 空きストレージが${floor(var.rds_storage_threshold_bytes / 1073741824)}GBを下回りました。
-    - DB: ${var.rds_instance_id}
-    - 空きストレージ: {{value}}バイト
-    - 影響: 全テナント
-
-    対応: ストレージの拡張またはデータ削除を検討してください。
-
-    ${join("\n", var.notification_channels)}
-  EOT
-
-  monitor_thresholds {
-    critical = var.rds_storage_threshold_bytes
-    warning  = var.rds_storage_warning_bytes
-  }
-
-  tags = concat(
-    ["layer:l0", "resource:rds", "severity:critical"],
-    [for k, v in var.tags : "${k}:${v}"]
-  )
-
-  notify_no_data    = false
-  renotify_interval = 0
-}
-
-# L0-ECS-Tasks Monitor
-# NOTE: aws.ecs.service.desired は ECS サービスの desired count。
-#       running が取得できない場合の代替。0 以下でアラート。
-resource "datadog_monitor" "ecs_tasks" {
-  name    = "[L0] ECS Desired Tasks"
-  type    = "metric alert"
-  query   = "avg(last_5m):sum:aws.ecs.service.desired{*} <= ${var.ecs_tasks_threshold}"
-  message = <<-EOT
-    [L0] ECS Clusterでタスクが0になりました。
-    - Cluster: ${var.ecs_cluster_name}
-    - Running Tasks: {{value}}
-    - 影響: 全テナント（サービス停止）
-
-    ${join("\n", var.notification_channels)}
-  EOT
-
-  monitor_thresholds {
-    critical = var.ecs_tasks_threshold
-    warning  = 1
-  }
-
-  tags = concat(
-    ["layer:l0", "resource:ecs", "severity:critical"],
-    [for k, v in var.tags : "${k}:${v}"]
-  )
-
-  notify_no_data    = false
-  renotify_interval = 0
-}
-
-# L0-VPC-Flow Monitor (disabled - requires Log Management enabled)
-resource "datadog_monitor" "vpc_flow" {
-  count   = 0 # Disabled: Log Management not enabled in this Datadog account
-  name    = "[L0] VPC Flow Logs 異常"
-  type    = "log alert"
-  query   = "logs(\"source:vpc-flow-logs status:reject\").rollup(\"count\").last(\"5m\") > 100"
-  message = <<-EOT
-    [L0] VPC Flow Logsで異常なトラフィックを検知しました。
-    - Rejected Packets: {{value}}
-    - 影響: 全テナント
-
-    ${join("\n", var.notification_channels)}
-  EOT
-
-  monitor_thresholds {
-    critical = 100
-    warning  = 50
-  }
-
-  tags = concat(
-    ["layer:l0", "resource:vpc", "severity:high"],
-    [for k, v in var.tags : "${k}:${v}"]
-  )
-
-  notify_no_data    = false
-  renotify_interval = 0
-}
-
-# L0-Agent Monitor
-# NOTE: ECS Fargate ではサイドカーとして Agent が動作。
-#       Fargate のホスト名は動的に変わり、service check のタグ付けが異なる。
-#       ワイルドカードで env:poc タグを使用して Agent 監視。
+# ============================================================
+# L0-APM Monitor: APMトレース疎通監視
+# ============================================================
+#
+# 【監視内容】
+# APMトレース（trace.fastapi.request.hits）が途絶えていないかを監視
+#
+# 【アラート条件】
+# 過去5分間のトレース数が1未満（ = トレースが来ていない）
+#
+# 【重要なクエリパラメータ】
+# - sum(last_5m): 過去5分間の合計
+# - .as_count(): メトリクスをカウントとして扱う（レート変換しない）
+# - {env:poc}: 環境タグでフィルタ（本番/開発を分離）
+# - < 1: 1件未満（つまり0件）でアラート
+#
+# 【考えられる障害原因】
+# 1. ECS タスクが停止している（DeploymentFailed、OOM等）
+# 2. Datadog Agent サイドカーが起動失敗（DD_API_KEY不正等）
+# 3. アプリケーション自体がクラッシュ
+# 4. ネットワーク問題でトレースが送信できない
+#
+# 【notify_no_data = true の理由】★重要★
+# - NO DATA（データが全く来ない）は重大な障害サイン
+# - 通常のMonitorは notify_no_data = false だが、L0だけは例外
+# - no_data_timeframe = 10: 10分間データが来なければNO DATAアラート
+#
+# 【Composite Monitorとの関係】
+# このMonitorのIDが l0_monitor_ids に含まれ、
+# L0 Composite Monitorで集約されます。
+# ============================================================
 resource "datadog_monitor" "agent" {
-  name    = "[L0] Datadog Agent 死活"
-  type    = "service check"
-  query   = "\"datadog.agent.up\".over(\"env:poc\").by(\"host\").last(2).count_by_status()"
+  name    = "[L0] APM トレース疎通"
+  type    = "metric alert"
+  query   = "sum(last_5m):sum:trace.fastapi.request.hits{env:poc}.as_count() < 1"
   message = <<-EOT
-    [L0] Datadog Agentが停止しました。
-    - Host: {{host.name}}
+    [L0] APMトレースが途絶えました（Agent または アプリケーション停止の可能性）。
+    - Service: demo-api
     - Cluster: ${var.ecs_cluster_name}
-    - 影響: 該当ホストの監視停止
+    - 影響: 全テナント（監視停止またはサービス停止）
+
+    確認事項:
+    - ECS タスクが起動しているか
+    - Datadog Agent サイドカーが動作しているか
+    - DD_API_KEY が正しく設定されているか
 
     ${join("\n", var.notification_channels)}
   EOT
 
   monitor_thresholds {
     critical = 1
-    ok       = 1
   }
 
   tags = concat(
-    ["layer:l0", "resource:agent", "severity:critical"],
+    ["layer:l0-infra", "resource:apm", "severity:critical"],
     [for k, v in var.tags : "${k}:${v}"]
   )
 
